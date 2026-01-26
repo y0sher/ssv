@@ -39,6 +39,24 @@ var TestingConfig = func(logger *zap.Logger, keySet *testingutils.TestKeySet) *q
 		Network:     testingutils.NewTestingNetwork(1, keySet.OperatorKeys[1]),
 		Timer:       roundtimer.NewTestingTimer(),
 		CutOffRound: testingutils.TestingCutOffRound,
+		SMRMode:     false, // Standard 4-phase QBFT
+	}
+}
+
+// TestingSMRConfig returns a config with SMR 2-phase consensus enabled.
+// In SMR mode, nodes send commits directly upon receiving proposals,
+// skipping the prepare phase for lower latency.
+var TestingSMRConfig = func(logger *zap.Logger, keySet *testingutils.TestKeySet) *qbft.Config {
+	return &qbft.Config{
+		BeaconSigner: ekm.NewTestingKeyManagerAdapter(testingutils.NewTestingKeyManager()),
+		Domain:       testingutils.TestingSSVDomainType,
+		ProposerF: func(state *specqbft.State, round specqbft.Round) types.OperatorID {
+			return 1
+		},
+		Network:     testingutils.NewTestingNetwork(1, keySet.OperatorKeys[1]),
+		Timer:       roundtimer.NewTestingTimer(),
+		CutOffRound: testingutils.TestingCutOffRound,
+		SMRMode:     true, // 2-phase SMR consensus
 	}
 }
 
