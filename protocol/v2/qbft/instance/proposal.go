@@ -46,6 +46,26 @@ func (i *Instance) uponProposal(ctx context.Context, logger *zap.Logger, msg *sp
 		return errors.Wrap(err, "could not hash input data")
 	}
 
+	// SMR Mode: Skip prepare phase and send commit directly (2-phase consensus)
+	if i.config.IsSMRMode() {
+		// In SMR mode, we record that we're "prepared" immediately
+		i.State.LastPreparedValue = msg.SignedMessage.FullData
+		i.State.LastPreparedRound = newRound
+
+		commit, err := i.CreateCommit(r)
+		if err != nil {
+			return errors.Wrap(err, "could not create commit msg (SMR mode)")
+		}
+
+		logger.Debug("📢 got proposal, broadcasting commit message (SMR 2-phase mode)", zap.Any("commit_signers", commit.OperatorIDs))
+
+		if err := i.Broadcast(commit); err != nil {
+			return errors.Wrap(err, "failed to broadcast commit message (SMR mode)")
+		}
+		return nil
+	}
+
+	// Standard QBFT: Send prepare message (4-phase consensus)
 	prepare, err := i.CreatePrepare(newRound, r)
 	if err != nil {
 		return errors.Wrap(err, "could not create prepare msg")

@@ -26,6 +26,8 @@ type IConfig interface {
 	GetTimer() roundtimer.Timer
 	// GetRoundCutOff returns the round cut off
 	GetCutOffRound() specqbft.Round
+	// IsSMRMode returns true if using 2-phase SMR consensus instead of 4-phase QBFT
+	IsSMRMode() bool
 }
 
 type Config struct {
@@ -35,6 +37,10 @@ type Config struct {
 	Network      specqbft.Network
 	Timer        roundtimer.Timer
 	CutOffRound  specqbft.Round
+	// SMRMode enables 2-phase SMR consensus instead of 4-phase QBFT.
+	// In SMR mode, upon receiving a proposal, nodes send a commit directly
+	// (skipping the prepare phase), achieving consensus in 2 rounds.
+	SMRMode bool
 }
 
 // GetShareSigner returns a BeaconSigner instance
@@ -64,4 +70,9 @@ func (c *Config) GetTimer() roundtimer.Timer {
 
 func (c *Config) GetCutOffRound() specqbft.Round {
 	return c.CutOffRound
+}
+
+// IsSMRMode returns true if using 2-phase SMR consensus.
+func (c *Config) IsSMRMode() bool {
+	return c.SMRMode
 }

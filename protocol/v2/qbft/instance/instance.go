@@ -89,13 +89,18 @@ func (i *Instance) Start(
 
 	proposerID := i.ProposerForRound(specqbft.FirstRound)
 
-	const startingQBFTInstanceEvent = "ℹ️ starting QBFT instance"
+	consensusMode := "QBFT (4-phase)"
+	if i.config.IsSMRMode() {
+		consensusMode = "SMR (2-phase)"
+	}
+	startingInstanceEvent := "ℹ️ starting consensus instance"
 	logger.Debug(
-		startingQBFTInstanceEvent,
+		startingInstanceEvent,
 		zap.Uint64("us", i.State.CommitteeMember.OperatorID),
 		zap.Uint64("leader", proposerID),
+		zap.String("mode", consensusMode),
 	)
-	span.AddEvent(startingQBFTInstanceEvent, trace.WithAttributes(observability.ValidatorProposerAttribute(proposerID)))
+	span.AddEvent(startingInstanceEvent, trace.WithAttributes(observability.ValidatorProposerAttribute(proposerID)))
 
 	i.StartValue = value
 	i.bumpToRound(specqbft.FirstRound)
